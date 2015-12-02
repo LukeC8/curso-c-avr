@@ -1,4 +1,5 @@
 #include <avr/io.h>
+#include <util/delay.h>
 
 #define CHANNEL_0 0
 #define VREF 5.0
@@ -40,6 +41,9 @@ void main (void)
 
 			PORTB &= ~(1<<PB5); // desliga o LED
 		}
+
+		PORTB ^= (1<<PB5);
+		_delay_ms(500);
 	}
 }
 
@@ -52,8 +56,8 @@ void init_adc (void)
 
 uint16_t adc_read (unsigned char channel)
 {
-	channel &= 0b00000111;	//garante que o numero do canal seja no max 8.
-	ADMUX &= 0b11100000;	//limpa configuracoes de leitura de canais anteriores.
+	channel &= 0b0000111;	//garante que o numero do canal seja no max 8.
+	ADMUX &= 0b11111000;	//limpa configuracoes de leitura de canais anteriores.
 	ADMUX |= channel;	//configura o canal a ser lido.
 
 	ADCSRA |= (1<<ADSC); 	//inicia a conversao.
@@ -62,9 +66,9 @@ uint16_t adc_read (unsigned char channel)
 
 	//conversao finalizada! O resultado esta armazenado nos registradores
 	//ADCH e ADCL
-	uint16_t result = (ADCH << 8); //desloca a parte mais significativa
-	result |= ADCL;
+	uint16_t result = ADCL; //le-se a parte menos significativa primeiro
+	result |= (ADCH << 8);  //le-se a parte mais significativa
 
-	return result;
+	return result; // (ADCL | (ADCH << 8)) ou ADC
 }
 
